@@ -147,11 +147,71 @@ void main() {
       );
     });
   });
+
+  group('DualColumnTimeline', () {
+    test('requires valid time range and hour height', () {
+      expect(
+        () => DualColumnTimeline(
+          plannedEvents: const [],
+          actualEvents: const [],
+          hourHeight: 0,
+        ),
+        throwsA(isA<AssertionError>()),
+      );
+      expect(
+        () => DualColumnTimeline(
+          plannedEvents: const [],
+          actualEvents: const [],
+          startHour: 18,
+          endHour: 8,
+        ),
+        throwsA(isA<AssertionError>()),
+      );
+    });
+
+    testWidgets('uses a scroll view, stack, and grid painter', (tester) async {
+      await _pumpTimeline(tester);
+
+      expect(find.byType(SingleChildScrollView), findsOneWidget);
+      expect(find.byType(Stack), findsOneWidget);
+      expect(_timelineGridPaintFinder, findsOneWidget);
+    });
+
+    testWidgets('positions planned events in the left column', (tester) async {
+      await _pumpTimeline(tester);
+
+      final stackTopLeft = tester.getTopLeft(find.byType(Stack));
+      final plannedTopLeft = tester.getTopLeft(find.byKey(_plannedEventKey));
+      final plannedSize = tester.getSize(find.byKey(_plannedEventKey));
+
+      expect(plannedTopLeft.dx - stackTopLeft.dx, 0);
+      expect(plannedTopLeft.dy - stackTopLeft.dy, 60);
+      expect(plannedSize.width, 100);
+      expect(plannedSize.height, 30);
+    });
+
+    testWidgets('positions actual events in the right column', (tester) async {
+      await _pumpTimeline(tester);
+
+      final stackTopLeft = tester.getTopLeft(find.byType(Stack));
+      final actualTopLeft = tester.getTopLeft(find.byKey(_actualEventKey));
+      final actualSize = tester.getSize(find.byKey(_actualEventKey));
+
+      expect(actualTopLeft.dx - stackTopLeft.dx, 100);
+      expect(actualTopLeft.dy - stackTopLeft.dy, 90);
+      expect(actualSize.width, 100);
+      expect(actualSize.height, 60);
+    });
+  });
 }
 
 const _gridLineColor = Color(0xFFFF0000);
 const _dividerColor = Color(0xFF0000FF);
 const _backgroundColor = Color(0xFFFFFFFF);
+
+final _timelineGridPaintFinder = find.byWidgetPredicate((widget) {
+  return widget is CustomPaint && widget.painter is TimelineGridPainter;
+});
 
 Future<void> _pumpGrid(WidgetTester tester, {required double width}) async {
   await tester.pumpWidget(
@@ -167,6 +227,46 @@ Future<void> _pumpGrid(WidgetTester tester, {required double width}) async {
               gridLineColor: _gridLineColor,
               dividerColor: _dividerColor,
             ),
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+final _plannedEventKey = ValueKey('planned-${_plannedEvent.id}');
+final _actualEventKey = ValueKey('actual-${_actualEvent.id}');
+
+final _plannedEvent = TimelineEvent(
+  id: 'planned-focus',
+  title: 'Planned Focus',
+  startTime: DateTime(2026, 6, 2, 9),
+  endTime: DateTime(2026, 6, 2, 9, 30),
+  backgroundColor: const Color(0xFF1A73E8),
+);
+
+final _actualEvent = TimelineEvent(
+  id: 'actual-focus',
+  title: 'Actual Focus',
+  startTime: DateTime(2026, 6, 2, 9, 30),
+  endTime: DateTime(2026, 6, 2, 10, 30),
+  backgroundColor: const Color(0xFF34A853),
+);
+
+Future<void> _pumpTimeline(WidgetTester tester) async {
+  await tester.pumpWidget(
+    Directionality(
+      textDirection: TextDirection.ltr,
+      child: Center(
+        child: SizedBox(
+          width: 200,
+          height: 120,
+          child: DualColumnTimeline(
+            plannedEvents: [_plannedEvent],
+            actualEvents: [_actualEvent],
+            hourHeight: 60,
+            startHour: 8,
+            endHour: 12,
           ),
         ),
       ),
