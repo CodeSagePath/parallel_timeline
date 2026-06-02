@@ -20,8 +20,23 @@ class TimelineExampleApp extends StatelessWidget {
   }
 }
 
-class TimelineExampleScreen extends StatelessWidget {
+class TimelineExampleScreen extends StatefulWidget {
   const TimelineExampleScreen({super.key});
+
+  @override
+  State<TimelineExampleScreen> createState() => _TimelineExampleScreenState();
+}
+
+class _TimelineExampleScreenState extends State<TimelineExampleScreen> {
+  late final List<TimelineEvent> _plannedEvents;
+  late List<TimelineEvent> _actualEvents;
+
+  @override
+  void initState() {
+    super.initState();
+    _plannedEvents = plannedEvents;
+    _actualEvents = actualEvents;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,11 +48,12 @@ class TimelineExampleScreen extends StatelessWidget {
             const _TrackHeader(),
             Expanded(
               child: DualColumnTimeline(
-                plannedEvents: plannedEvents,
-                actualEvents: actualEvents,
+                plannedEvents: _plannedEvents,
+                actualEvents: _actualEvents,
                 startHour: 8,
                 endHour: 15,
                 hourHeight: 96,
+                onEventUpdated: _replaceActualEvent,
                 eventBuilder: _buildEventCard,
               ),
             ),
@@ -45,6 +61,14 @@ class TimelineExampleScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  void _replaceActualEvent(TimelineEvent oldEvent, TimelineEvent newEvent) {
+    setState(() {
+      _actualEvents = _actualEvents.map((event) {
+        return event.id == oldEvent.id ? newEvent : event;
+      }).toList();
+    });
   }
 
   Widget _buildEventCard(BuildContext context, TimelineEvent event) {

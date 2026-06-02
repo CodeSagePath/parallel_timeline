@@ -16,6 +16,7 @@ or any side-by-side timeline where duration and start time matter.
 - Left-side time axis labels for each visible hour.
 - Built-in current time indicator for the active day.
 - Event spacing so cards do not sit flush against dividers or edges.
+- Interactive actual-track editing with drag and resize callbacks.
 - Custom event cards with `eventBuilder`.
 - Built-in grid painter with horizontal hour lines and a center divider.
 - Example app under `example/`.
@@ -70,8 +71,16 @@ DualColumnTimeline(
   hourHeight: 96,
   timeAxisWidth: 56,
   eventSpacing: 6,
+  onEventUpdated: (oldEvent, newEvent) {
+    // Replace oldEvent with newEvent in your app state.
+  },
 );
 ```
+
+Actual-track events can be dragged vertically to move their start and end time
+together. Drag the bottom handle to resize the event duration. The widget calls
+`onEventUpdated` with the original event and the updated event so the parent can
+persist the change.
 
 Customize event cards with `eventBuilder`:
 

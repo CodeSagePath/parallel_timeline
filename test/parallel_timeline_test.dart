@@ -36,6 +36,27 @@ void main() {
       expect(event.durationInMinutes, 45);
     });
 
+    test('copies selected event details', () {
+      final startTime = DateTime(2026, 6, 2, 11);
+      final event = TimelineEvent(
+        id: 'build',
+        title: 'Build',
+        startTime: startTime,
+        endTime: DateTime(2026, 6, 2, 12),
+        backgroundColor: const Color(0xFF34A853),
+      );
+
+      final copiedEvent = event.copyWith(
+        startTime: DateTime(2026, 6, 2, 11, 30),
+      );
+
+      expect(copiedEvent.id, event.id);
+      expect(copiedEvent.title, event.title);
+      expect(copiedEvent.startTime, DateTime(2026, 6, 2, 11, 30));
+      expect(copiedEvent.endTime, event.endTime);
+      expect(copiedEvent.backgroundColor, event.backgroundColor);
+    });
+
     test('requires endTime to be after startTime', () {
       final startTime = DateTime(2026, 6, 2, 13);
 
@@ -217,6 +238,48 @@ void main() {
       expect(indicatorSize.width, 160);
       expect(indicatorSize.height, 2);
     });
+
+    testWidgets('moves actual events with vertical drag', (tester) async {
+      TimelineEvent? oldEvent;
+      TimelineEvent? newEvent;
+      await _pumpTimeline(
+        tester,
+        onEventUpdated: (previousEvent, updatedEvent) {
+          oldEvent = previousEvent;
+          newEvent = updatedEvent;
+        },
+      );
+
+      await tester.drag(find.byKey(_actualEventKey), const Offset(0, 30));
+      await tester.pump();
+
+      expect(oldEvent, _actualEvent);
+      expect(newEvent?.startTime, DateTime(2026, 6, 2, 10));
+      expect(newEvent?.endTime, DateTime(2026, 6, 2, 11));
+    });
+
+    testWidgets('resizes actual events from the bottom handle', (tester) async {
+      TimelineEvent? oldEvent;
+      TimelineEvent? newEvent;
+      await _pumpTimeline(
+        tester,
+        onEventUpdated: (previousEvent, updatedEvent) {
+          oldEvent = previousEvent;
+          newEvent = updatedEvent;
+        },
+      );
+
+      await tester.drag(
+        find.byKey(_actualResizeHandleKey),
+        const Offset(0, 50),
+      );
+      await tester.pump();
+
+      expect(oldEvent, _actualEvent);
+      expect(newEvent?.startTime, _actualEvent.startTime);
+      expect(newEvent?.endTime, DateTime(2026, 6, 2, 11));
+      expect(newEvent?.durationInMinutes, 90);
+    });
   });
 }
 
@@ -255,6 +318,9 @@ Future<void> _pumpGrid(WidgetTester tester, {required double width}) async {
 
 final _plannedEventKey = ValueKey('planned-${_plannedEvent.id}');
 final _actualEventKey = ValueKey('actual-${_actualEvent.id}');
+final _actualResizeHandleKey = ValueKey(
+  'actual-${_actualEvent.id}-resize-handle',
+);
 const _currentTimeIndicatorKey = ValueKey('current-time-indicator');
 
 final _plannedEvent = TimelineEvent(
@@ -273,14 +339,17 @@ final _actualEvent = TimelineEvent(
   backgroundColor: const Color(0xFF34A853),
 );
 
-Future<void> _pumpTimeline(WidgetTester tester) async {
+Future<void> _pumpTimeline(
+  WidgetTester tester, {
+  TimelineEventUpdatedCallback? onEventUpdated,
+}) async {
   await tester.pumpWidget(
     Directionality(
       textDirection: TextDirection.ltr,
       child: Center(
         child: SizedBox(
           width: 200,
-          height: 120,
+          height: 260,
           child: DualColumnTimeline(
             plannedEvents: [_plannedEvent],
             actualEvents: [_actualEvent],
@@ -291,6 +360,7 @@ Future<void> _pumpTimeline(WidgetTester tester) async {
             eventSpacing: 6,
             currentTime: DateTime(2026, 6, 2, 9, 15),
             currentTimeIndicatorKey: _currentTimeIndicatorKey,
+            onEventUpdated: onEventUpdated,
           ),
         ),
       ),

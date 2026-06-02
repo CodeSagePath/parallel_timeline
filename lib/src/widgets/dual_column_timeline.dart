@@ -12,6 +12,13 @@ import '../painters/timeline_grid_painter.dart';
 typedef TimelineEventBuilder =
     Widget Function(BuildContext context, TimelineEvent event);
 
+/// Reports that a timeline [oldEvent] was edited into [newEvent].
+///
+/// The parent widget should update its own event list with [newEvent] and pass
+/// the updated list back into [DualColumnTimeline].
+typedef TimelineEventUpdatedCallback =
+    void Function(TimelineEvent oldEvent, TimelineEvent newEvent);
+
 /// Displays planned and actual events in two time-aligned columns.
 ///
 /// [plannedEvents] are rendered in the left column and [actualEvents] are
@@ -36,6 +43,7 @@ class DualColumnTimeline extends StatefulWidget {
     this.currentTimeUpdateInterval = const Duration(minutes: 1),
     this.currentTimeIndicatorKey,
     this.currentTimeIndicatorColor = Colors.red,
+    this.onEventUpdated,
     this.eventBuilder,
   }) : assert(hourHeight > 0, 'hourHeight must be greater than zero.'),
        assert(timeAxisWidth >= 0, 'timeAxisWidth must not be negative.'),
@@ -90,6 +98,9 @@ class DualColumnTimeline extends StatefulWidget {
 
   /// Color used for the current time indicator line.
   final Color currentTimeIndicatorColor;
+
+  /// Called when an actual-track event is moved or resized by the user.
+  final TimelineEventUpdatedCallback? onEventUpdated;
 
   /// Optional builder for custom event card content.
   final TimelineEventBuilder? eventBuilder;
@@ -170,6 +181,7 @@ class _DualColumnTimelineState extends State<DualColumnTimeline> {
                   left: widget.timeAxisWidth,
                   columnWidth: columnWidth,
                   trackName: 'planned',
+                  isEditable: false,
                 ),
                 ..._positionedEvents(
                   context: context,
@@ -177,6 +189,7 @@ class _DualColumnTimelineState extends State<DualColumnTimeline> {
                   left: widget.timeAxisWidth + columnWidth,
                   columnWidth: columnWidth,
                   trackName: 'actual',
+                  isEditable: true,
                 ),
                 if (widget.showCurrentTimeIndicator)
                   _CurrentTimeIndicator(
@@ -203,20 +216,30 @@ class _DualColumnTimelineState extends State<DualColumnTimeline> {
     required double left,
     required double columnWidth,
     required String trackName,
+    required bool isEditable,
   }) {
     return events.map((event) {
+      final child = Padding(
+        padding: EdgeInsets.all(widget.eventSpacing),
+        child: SizedBox(
+          key: ValueKey('$trackName-${event.id}'),
+          child: _buildEvent(context, event),
+        ),
+      );
+
       return Positioned(
         top: _topOffset(event),
         left: left,
         width: columnWidth,
         height: _eventHeight(event),
-        child: Padding(
-          padding: EdgeInsets.all(widget.eventSpacing),
-          child: SizedBox(
-            key: ValueKey('$trackName-${event.id}'),
-            child: _buildEvent(context, event),
-          ),
-        ),
+        child: isEditable && widget.onEventUpdated != null
+            ? _EditableTimelineEvent(
+                event: event,
+                hourHeight: widget.hourHeight,
+                onEventUpdated: widget.onEventUpdated!,
+                child: child,
+              )
+            : child,
       );
     }).toList();
   }
@@ -271,6 +294,133 @@ class _DualColumnTimelineState extends State<DualColumnTimeline> {
         _now = DateTime.now();
       });
     });
+  }
+}
+
+class _EditableTimelineEvent extends StatefulWidget {
+  const _EditableTimelineEvent({
+    required this.event,
+    required this.hourHeight,
+    required this.onEventUpdated,
+    required this.child,
+  });
+
+  final TimelineEvent event;
+  final double hourHeight;
+  final TimelineEventUpdatedCallback onEventUpdated;
+  final Widget child;
+
+  @override
+  State<_EditableTimelineEvent> createState() => _EditableTimelineEventState();
+}
+
+class _EditableTimelineEventState extends State<_EditableTimelineEvent> {
+  double _moveDeltaY = 0;
+  double _resizeDeltaY = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onVerticalDragStart: (_) {
+        _moveDeltaY = 0;
+      },
+      onVerticalDragUpdate: (details) {
+        _moveDeltaY += details.delta.dy;
+      },
+      onVerticalDragEnd: (_) {
+        _updateMovedEvent();
+      },
+      child: Stack(
+        alignment: Alignment.bottomCenter,
+        children: [
+          Positioned.fill(child: widget.child),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            height: 16,
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onVerticalDragStart: (_) {
+                _resizeDeltaY = 0;
+              },
+              onVerticalDragUpdate: (details) {
+                _resizeDeltaY += details.delta.dy;
+              },
+              onVerticalDragEnd: (_) {
+                _updateResizedEvent();
+              },
+              child: _ResizeHandle(eventId: widget.event.id),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _updateMovedEvent() {
+    final minuteDelta = _minutesFromDelta(_moveDeltaY);
+    if (minuteDelta == 0) {
+      return;
+    }
+
+    widget.onEventUpdated(
+      widget.event,
+      widget.event.copyWith(
+        startTime: widget.event.startTime.add(Duration(minutes: minuteDelta)),
+        endTime: widget.event.endTime.add(Duration(minutes: minuteDelta)),
+      ),
+    );
+  }
+
+  void _updateResizedEvent() {
+    final minuteDelta = _minutesFromDelta(_resizeDeltaY);
+    if (minuteDelta == 0) {
+      return;
+    }
+
+    final requestedEndTime = widget.event.endTime.add(
+      Duration(minutes: minuteDelta),
+    );
+    final minimumEndTime = widget.event.startTime.add(
+      const Duration(minutes: 1),
+    );
+
+    widget.onEventUpdated(
+      widget.event,
+      widget.event.copyWith(
+        endTime: requestedEndTime.isAfter(minimumEndTime)
+            ? requestedEndTime
+            : minimumEndTime,
+      ),
+    );
+  }
+
+  int _minutesFromDelta(double deltaY) {
+    return (deltaY * Duration.minutesPerHour / widget.hourHeight).round();
+  }
+}
+
+class _ResizeHandle extends StatelessWidget {
+  const _ResizeHandle({required this.eventId});
+
+  final String eventId;
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.bottomCenter,
+      child: Container(
+        key: ValueKey('actual-$eventId-resize-handle'),
+        height: 4,
+        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        decoration: BoxDecoration(
+          color: Colors.black.withValues(alpha: 0.24),
+          borderRadius: BorderRadius.circular(2),
+        ),
+      ),
+    );
   }
 }
 

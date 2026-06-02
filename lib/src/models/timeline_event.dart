@@ -35,4 +35,21 @@ class TimelineEvent {
 
   /// The event duration in whole minutes.
   int get durationInMinutes => endTime.difference(startTime).inMinutes;
+
+  /// Creates a copy of this event with selected fields replaced.
+  TimelineEvent copyWith({
+    String? id,
+    String? title,
+    DateTime? startTime,
+    DateTime? endTime,
+    Color? backgroundColor,
+  }) {
+    return TimelineEvent(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      startTime: startTime ?? this.startTime,
+      endTime: endTime ?? this.endTime,
+      backgroundColor: backgroundColor ?? this.backgroundColor,
+    );
+  }
 }
