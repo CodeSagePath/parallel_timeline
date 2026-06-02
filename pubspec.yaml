@@ -1,6 +1,6 @@
 name: parallel_timeline
 description: A Flutter package for building parallel, dual-column timeline interfaces.
-version: 1.0.0
+version: 0.1.0
 repository: https://github.com/CodeSagePath/parallel_timeline
 homepage: https://github.com/CodeSagePath/parallel_timeline
 topics:

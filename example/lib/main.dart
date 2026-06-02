@@ -11,7 +11,7 @@ class TimelineExampleApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Parallel Timeline Example',
+      title: 'Parallel Timeline Demo',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF1A73E8)),
       ),
@@ -26,7 +26,7 @@ class TimelineExampleScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Parallel Timeline Example')),
+      appBar: AppBar(title: const Text('Parallel Timeline Demo')),
       body: SafeArea(
         child: Column(
           children: [

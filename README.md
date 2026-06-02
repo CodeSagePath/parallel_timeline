@@ -23,7 +23,7 @@ Add the package to your Flutter project:
 
 ```yaml
 dependencies:
-  parallel_timeline: ^1.0.0
+  parallel_timeline: ^0.1.0
 ```
 
 Import the package:

@@ -1,6 +1,6 @@
 {
-    "name": "example",
-    "short_name": "example",
+    "name": "Parallel Timeline Demo",
+    "short_name": "Timeline Demo",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

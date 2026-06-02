@@ -1,4 +1,4 @@
-## 1.0.0
+## 0.1.0
 
 - Initial release of `parallel_timeline`.
 - Added `TimelineEvent` for timeline data modeling.
