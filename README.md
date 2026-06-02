@@ -16,6 +16,7 @@ or any side-by-side timeline where duration and start time matter.
 - Left-side time axis labels for each visible hour.
 - Built-in current time indicator for the active day.
 - Event spacing so cards do not sit flush against dividers or edges.
+- Same-track overlap handling that places conflicting events side-by-side.
 - Interactive actual-track editing with drag and resize callbacks.
 - Custom event cards with `eventBuilder`.
 - Built-in grid painter with horizontal hour lines and a center divider.
@@ -116,7 +117,7 @@ The package includes focused tests for:
 
 - `TimelineEvent` validation and duration calculations.
 - `TimelineGridPainter` repaint behavior and line placement.
-- `DualColumnTimeline` stack structure and event positioning.
+- `DualColumnTimeline` stack structure, event positioning, and overlap lanes.
 
 Run checks from the package root:
 

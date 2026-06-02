@@ -1,5 +1,6 @@
 ## Unreleased
 
+- Added same-track overlap layout so conflicting events render side-by-side.
 - Added actual-track drag support for moving event start and end times.
 - Added bottom-handle resizing for actual-track event duration.
 - Added `onEventUpdated` callback for parent-controlled schedule updates.

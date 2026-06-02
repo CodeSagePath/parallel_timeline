@@ -212,6 +212,60 @@ void main() {
       expect(actualSize.height, 48);
     });
 
+    testWidgets('places overlapping planned events side-by-side', (
+      tester,
+    ) async {
+      await _pumpTimeline(
+        tester,
+        plannedEvents: [_plannedOverlapA, _plannedOverlapB],
+        actualEvents: const [],
+      );
+
+      _expectRelativeGeometry(
+        tester,
+        finder: find.byKey(_plannedOverlapAKey),
+        dx: 46,
+        dy: 66,
+        width: 28,
+        height: 48,
+      );
+      _expectRelativeGeometry(
+        tester,
+        finder: find.byKey(_plannedOverlapBKey),
+        dx: 86,
+        dy: 96,
+        width: 28,
+        height: 48,
+      );
+    });
+
+    testWidgets('places overlapping actual events side-by-side', (
+      tester,
+    ) async {
+      await _pumpTimeline(
+        tester,
+        plannedEvents: const [],
+        actualEvents: [_actualOverlapA, _actualOverlapB],
+      );
+
+      _expectRelativeGeometry(
+        tester,
+        finder: find.byKey(_actualOverlapAKey),
+        dx: 126,
+        dy: 66,
+        width: 28,
+        height: 48,
+      );
+      _expectRelativeGeometry(
+        tester,
+        finder: find.byKey(_actualOverlapBKey),
+        dx: 166,
+        dy: 96,
+        width: 28,
+        height: 48,
+      );
+    });
+
     testWidgets('renders time labels on the left axis', (tester) async {
       await _pumpTimeline(tester);
 
@@ -318,6 +372,10 @@ Future<void> _pumpGrid(WidgetTester tester, {required double width}) async {
 
 final _plannedEventKey = ValueKey('planned-${_plannedEvent.id}');
 final _actualEventKey = ValueKey('actual-${_actualEvent.id}');
+final _plannedOverlapAKey = ValueKey('planned-${_plannedOverlapA.id}');
+final _plannedOverlapBKey = ValueKey('planned-${_plannedOverlapB.id}');
+final _actualOverlapAKey = ValueKey('actual-${_actualOverlapA.id}');
+final _actualOverlapBKey = ValueKey('actual-${_actualOverlapB.id}');
 final _actualResizeHandleKey = ValueKey(
   'actual-${_actualEvent.id}-resize-handle',
 );
@@ -339,8 +397,42 @@ final _actualEvent = TimelineEvent(
   backgroundColor: const Color(0xFF34A853),
 );
 
+final _plannedOverlapA = TimelineEvent(
+  id: 'planned-overlap-a',
+  title: 'Planned Overlap A',
+  startTime: DateTime(2026, 6, 2, 9),
+  endTime: DateTime(2026, 6, 2, 10),
+  backgroundColor: const Color(0xFF1A73E8),
+);
+
+final _plannedOverlapB = TimelineEvent(
+  id: 'planned-overlap-b',
+  title: 'Planned Overlap B',
+  startTime: DateTime(2026, 6, 2, 9, 30),
+  endTime: DateTime(2026, 6, 2, 10, 30),
+  backgroundColor: const Color(0xFF673AB7),
+);
+
+final _actualOverlapA = TimelineEvent(
+  id: 'actual-overlap-a',
+  title: 'Actual Overlap A',
+  startTime: DateTime(2026, 6, 2, 9),
+  endTime: DateTime(2026, 6, 2, 10),
+  backgroundColor: const Color(0xFF34A853),
+);
+
+final _actualOverlapB = TimelineEvent(
+  id: 'actual-overlap-b',
+  title: 'Actual Overlap B',
+  startTime: DateTime(2026, 6, 2, 9, 30),
+  endTime: DateTime(2026, 6, 2, 10, 30),
+  backgroundColor: const Color(0xFFEF6C00),
+);
+
 Future<void> _pumpTimeline(
   WidgetTester tester, {
+  List<TimelineEvent>? plannedEvents,
+  List<TimelineEvent>? actualEvents,
   TimelineEventUpdatedCallback? onEventUpdated,
 }) async {
   await tester.pumpWidget(
@@ -351,8 +443,8 @@ Future<void> _pumpTimeline(
           width: 200,
           height: 260,
           child: DualColumnTimeline(
-            plannedEvents: [_plannedEvent],
-            actualEvents: [_actualEvent],
+            plannedEvents: plannedEvents ?? [_plannedEvent],
+            actualEvents: actualEvents ?? [_actualEvent],
             hourHeight: 60,
             startHour: 8,
             endHour: 12,
@@ -366,4 +458,22 @@ Future<void> _pumpTimeline(
       ),
     ),
   );
+}
+
+void _expectRelativeGeometry(
+  WidgetTester tester, {
+  required Finder finder,
+  required double dx,
+  required double dy,
+  required double width,
+  required double height,
+}) {
+  final stackTopLeft = tester.getTopLeft(_timelineStackFinder);
+  final childTopLeft = tester.getTopLeft(finder);
+  final childSize = tester.getSize(finder);
+
+  expect(childTopLeft.dx - stackTopLeft.dx, dx);
+  expect(childTopLeft.dy - stackTopLeft.dy, dy);
+  expect(childSize.width, width);
+  expect(childSize.height, height);
 }

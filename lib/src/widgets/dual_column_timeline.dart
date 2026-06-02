@@ -218,7 +218,9 @@ class _DualColumnTimelineState extends State<DualColumnTimeline> {
     required String trackName,
     required bool isEditable,
   }) {
-    return events.map((event) {
+    return _layoutEvents(events).map((layout) {
+      final event = layout.event;
+      final laneWidth = columnWidth / layout.laneCount;
       final child = Padding(
         padding: EdgeInsets.all(widget.eventSpacing),
         child: SizedBox(
@@ -229,8 +231,8 @@ class _DualColumnTimelineState extends State<DualColumnTimeline> {
 
       return Positioned(
         top: _topOffset(event),
-        left: left,
-        width: columnWidth,
+        left: left + (laneWidth * layout.laneIndex),
+        width: laneWidth,
         height: _eventHeight(event),
         child: isEditable && widget.onEventUpdated != null
             ? _EditableTimelineEvent(
@@ -242,6 +244,85 @@ class _DualColumnTimelineState extends State<DualColumnTimeline> {
             : child,
       );
     }).toList();
+  }
+
+  List<_PositionedTimelineEvent> _layoutEvents(List<TimelineEvent> events) {
+    if (events.isEmpty) {
+      return const [];
+    }
+
+    final sortedEvents = events.toList()..sort(_compareEvents);
+    final layouts = <_PositionedTimelineEvent>[];
+    var cluster = <TimelineEvent>[];
+    DateTime? clusterEndTime;
+
+    for (final event in sortedEvents) {
+      final activeClusterEndTime = clusterEndTime;
+      final startsAfterCluster =
+          activeClusterEndTime != null &&
+          !event.startTime.isBefore(activeClusterEndTime);
+
+      if (cluster.isNotEmpty && startsAfterCluster) {
+        layouts.addAll(_layoutCluster(cluster));
+        cluster = <TimelineEvent>[];
+        clusterEndTime = null;
+      }
+
+      cluster.add(event);
+      if (clusterEndTime == null || event.endTime.isAfter(clusterEndTime)) {
+        clusterEndTime = event.endTime;
+      }
+    }
+
+    layouts.addAll(_layoutCluster(cluster));
+
+    return layouts;
+  }
+
+  List<_PositionedTimelineEvent> _layoutCluster(List<TimelineEvent> events) {
+    final laneEndTimes = <DateTime>[];
+    final assignments = <_TimelineLaneAssignment>[];
+
+    for (final event in events) {
+      var laneIndex = laneEndTimes.indexWhere((laneEndTime) {
+        return !event.startTime.isBefore(laneEndTime);
+      });
+
+      if (laneIndex == -1) {
+        laneIndex = laneEndTimes.length;
+        laneEndTimes.add(event.endTime);
+      } else {
+        laneEndTimes[laneIndex] = event.endTime;
+      }
+
+      assignments.add(
+        _TimelineLaneAssignment(event: event, laneIndex: laneIndex),
+      );
+    }
+
+    final laneCount = laneEndTimes.length;
+
+    return assignments.map((assignment) {
+      return _PositionedTimelineEvent(
+        event: assignment.event,
+        laneIndex: assignment.laneIndex,
+        laneCount: laneCount,
+      );
+    }).toList();
+  }
+
+  int _compareEvents(TimelineEvent first, TimelineEvent second) {
+    final startComparison = first.startTime.compareTo(second.startTime);
+    if (startComparison != 0) {
+      return startComparison;
+    }
+
+    final endComparison = first.endTime.compareTo(second.endTime);
+    if (endComparison != 0) {
+      return endComparison;
+    }
+
+    return first.id.compareTo(second.id);
   }
 
   Widget _buildEvent(BuildContext context, TimelineEvent event) {
@@ -295,6 +376,25 @@ class _DualColumnTimelineState extends State<DualColumnTimeline> {
       });
     });
   }
+}
+
+class _PositionedTimelineEvent {
+  const _PositionedTimelineEvent({
+    required this.event,
+    required this.laneIndex,
+    required this.laneCount,
+  });
+
+  final TimelineEvent event;
+  final int laneIndex;
+  final int laneCount;
+}
+
+class _TimelineLaneAssignment {
+  const _TimelineLaneAssignment({required this.event, required this.laneIndex});
+
+  final TimelineEvent event;
+  final int laneIndex;
 }
 
 class _EditableTimelineEvent extends StatefulWidget {
