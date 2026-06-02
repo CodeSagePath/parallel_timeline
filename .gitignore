@@ -32,3 +32,6 @@ migrate_working_dir/
 
 # Generated screenshots
 flutter_*.png
+
+# Personal Reference Files
+*.txt
