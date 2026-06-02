@@ -3,15 +3,23 @@ import 'package:flutter/material.dart';
 import '../models/timeline_event.dart';
 import '../painters/timeline_grid_painter.dart';
 
-/// Builds the visual content for a timeline event.
-typedef TimelineEventBuilder = Widget Function(
-  BuildContext context,
-  TimelineEvent event,
-);
+/// Builds the visual content for a timeline [event].
+///
+/// Use this callback to customize how event cards are rendered while keeping
+/// the package's time-based positioning behavior.
+typedef TimelineEventBuilder =
+    Widget Function(BuildContext context, TimelineEvent event);
 
 /// Displays planned and actual events in two time-aligned columns.
+///
+/// [plannedEvents] are rendered in the left column and [actualEvents] are
+/// rendered in the right column. Event vertical positions are calculated from
+/// [startHour], [endHour], and [hourHeight].
 class DualColumnTimeline extends StatelessWidget {
-  /// Creates a dual-column timeline.
+  /// Creates a scrollable dual-column timeline.
+  ///
+  /// The [hourHeight] must be greater than zero, [startHour] must be between
+  /// 0 and 23, and [endHour] must be after [startHour] and no greater than 24.
   const DualColumnTimeline({
     super.key,
     required this.plannedEvents,
@@ -20,15 +28,15 @@ class DualColumnTimeline extends StatelessWidget {
     this.startHour = 0,
     this.endHour = 24,
     this.eventBuilder,
-  })  : assert(hourHeight > 0, 'hourHeight must be greater than zero.'),
-        assert(
-          startHour >= 0 && startHour < 24,
-          'startHour must be between 0 and 23.',
-        ),
-        assert(
-          endHour > startHour && endHour <= 24,
-          'endHour must be after startHour and no greater than 24.',
-        );
+  }) : assert(hourHeight > 0, 'hourHeight must be greater than zero.'),
+       assert(
+         startHour >= 0 && startHour < 24,
+         'startHour must be between 0 and 23.',
+       ),
+       assert(
+         endHour > startHour && endHour <= 24,
+         'endHour must be after startHour and no greater than 24.',
+       );
 
   /// Events rendered in the left planned column.
   final List<TimelineEvent> plannedEvents;
@@ -48,6 +56,7 @@ class DualColumnTimeline extends StatelessWidget {
   /// Optional builder for custom event card content.
   final TimelineEventBuilder? eventBuilder;
 
+  /// Builds the scrollable stack-based timeline layout.
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(

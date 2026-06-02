@@ -85,16 +85,8 @@ void main() {
       expect(
         find.byType(CustomPaint),
         paints
-          ..line(
-            p1: Offset.zero,
-            p2: Offset(120, 0),
-            color: _gridLineColor,
-          )
-          ..line(
-            p1: Offset(0, 60),
-            p2: Offset(120, 60),
-            color: _gridLineColor,
-          )
+          ..line(p1: Offset.zero, p2: Offset(120, 0), color: _gridLineColor)
+          ..line(p1: Offset(0, 60), p2: Offset(120, 60), color: _gridLineColor)
           ..line(
             p1: Offset(0, 120),
             p2: Offset(120, 120),
@@ -105,11 +97,7 @@ void main() {
             p2: Offset(120, 180),
             color: _gridLineColor,
           )
-          ..line(
-            p1: Offset(60, 0),
-            p2: Offset(60, 180),
-            color: _dividerColor,
-          ),
+          ..line(p1: Offset(60, 0), p2: Offset(60, 180), color: _dividerColor),
       );
     });
 
@@ -119,16 +107,8 @@ void main() {
       expect(
         find.byType(CustomPaint),
         paints
-          ..line(
-            p1: Offset.zero,
-            p2: Offset(240, 0),
-            color: _gridLineColor,
-          )
-          ..line(
-            p1: Offset(0, 60),
-            p2: Offset(240, 60),
-            color: _gridLineColor,
-          )
+          ..line(p1: Offset.zero, p2: Offset(240, 0), color: _gridLineColor)
+          ..line(p1: Offset(0, 60), p2: Offset(240, 60), color: _gridLineColor)
           ..line(
             p1: Offset(0, 120),
             p2: Offset(240, 120),

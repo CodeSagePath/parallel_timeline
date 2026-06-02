@@ -1,3 +1,5 @@
+/// Flutter widgets for rendering planned and actual events in a dual-column
+/// timeline.
 library;
 
 export 'src/models/timeline_event.dart';

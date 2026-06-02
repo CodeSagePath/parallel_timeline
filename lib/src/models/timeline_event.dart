@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 
-/// A scheduled timeline item with a fixed start and end time.
+/// A scheduled timeline item rendered by [DualColumnTimeline].
+///
+/// Each event has a stable [id], display [title], inclusive [startTime],
+/// exclusive [endTime], and visual [backgroundColor]. The [endTime] must be
+/// strictly after [startTime].
 class TimelineEvent {
-  /// Creates a timeline event.
+  /// Creates a timeline event with a fixed time range and display color.
   TimelineEvent({
     required this.id,
     required this.title,
@@ -10,9 +14,9 @@ class TimelineEvent {
     required this.endTime,
     required this.backgroundColor,
   }) : assert(
-          endTime.isAfter(startTime),
-          'endTime must be strictly after startTime.',
-        );
+         endTime.isAfter(startTime),
+         'endTime must be strictly after startTime.',
+       );
 
   /// Stable identifier for the event.
   final String id;
@@ -29,6 +33,6 @@ class TimelineEvent {
   /// Background color used when rendering the event.
   final Color backgroundColor;
 
-  /// Event duration in whole minutes.
+  /// The event duration in whole minutes.
   int get durationInMinutes => endTime.difference(startTime).inMinutes;
 }
