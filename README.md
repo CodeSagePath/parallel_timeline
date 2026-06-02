@@ -13,6 +13,9 @@ or any side-by-side timeline where duration and start time matter.
 - Time-based event positioning from `startTime` and `durationInMinutes`.
 - Configurable visible time range with `startHour` and `endHour`.
 - Configurable vertical density through `hourHeight`.
+- Left-side time axis labels for each visible hour.
+- Built-in current time indicator for the active day.
+- Event spacing so cards do not sit flush against dividers or edges.
 - Custom event cards with `eventBuilder`.
 - Built-in grid painter with horizontal hour lines and a center divider.
 - Example app under `example/`.
@@ -65,6 +68,8 @@ DualColumnTimeline(
   startHour: 8,
   endHour: 15,
   hourHeight: 96,
+  timeAxisWidth: 56,
+  eventSpacing: 6,
 );
 ```
 
@@ -76,7 +81,6 @@ DualColumnTimeline(
   actualEvents: actualEvents,
   eventBuilder: (context, event) {
     return Container(
-      margin: const EdgeInsets.all(6),
       padding: const EdgeInsets.all(10),
       color: event.backgroundColor,
       child: Text(event.title),

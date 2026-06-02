@@ -49,7 +49,6 @@ class TimelineExampleScreen extends StatelessWidget {
 
   Widget _buildEventCard(BuildContext context, TimelineEvent event) {
     return Container(
-      margin: const EdgeInsets.all(6),
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: event.backgroundColor,

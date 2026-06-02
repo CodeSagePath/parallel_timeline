@@ -147,40 +147,75 @@ void main() {
         ),
         throwsA(isA<AssertionError>()),
       );
+      expect(
+        () => DualColumnTimeline(
+          plannedEvents: const [],
+          actualEvents: const [],
+          eventSpacing: -1,
+        ),
+        throwsA(isA<AssertionError>()),
+      );
     });
 
     testWidgets('uses a scroll view, stack, and grid painter', (tester) async {
       await _pumpTimeline(tester);
 
       expect(find.byType(SingleChildScrollView), findsOneWidget);
-      expect(find.byType(Stack), findsOneWidget);
+      expect(_timelineStackFinder, findsOneWidget);
       expect(_timelineGridPaintFinder, findsOneWidget);
     });
 
     testWidgets('positions planned events in the left column', (tester) async {
       await _pumpTimeline(tester);
 
-      final stackTopLeft = tester.getTopLeft(find.byType(Stack));
+      final stackTopLeft = tester.getTopLeft(_timelineStackFinder);
       final plannedTopLeft = tester.getTopLeft(find.byKey(_plannedEventKey));
       final plannedSize = tester.getSize(find.byKey(_plannedEventKey));
 
-      expect(plannedTopLeft.dx - stackTopLeft.dx, 0);
-      expect(plannedTopLeft.dy - stackTopLeft.dy, 60);
-      expect(plannedSize.width, 100);
-      expect(plannedSize.height, 30);
+      expect(plannedTopLeft.dx - stackTopLeft.dx, 46);
+      expect(plannedTopLeft.dy - stackTopLeft.dy, 66);
+      expect(plannedSize.width, 68);
+      expect(plannedSize.height, 18);
     });
 
     testWidgets('positions actual events in the right column', (tester) async {
       await _pumpTimeline(tester);
 
-      final stackTopLeft = tester.getTopLeft(find.byType(Stack));
+      final stackTopLeft = tester.getTopLeft(_timelineStackFinder);
       final actualTopLeft = tester.getTopLeft(find.byKey(_actualEventKey));
       final actualSize = tester.getSize(find.byKey(_actualEventKey));
 
-      expect(actualTopLeft.dx - stackTopLeft.dx, 100);
-      expect(actualTopLeft.dy - stackTopLeft.dy, 90);
-      expect(actualSize.width, 100);
-      expect(actualSize.height, 60);
+      expect(actualTopLeft.dx - stackTopLeft.dx, 126);
+      expect(actualTopLeft.dy - stackTopLeft.dy, 96);
+      expect(actualSize.width, 68);
+      expect(actualSize.height, 48);
+    });
+
+    testWidgets('renders time labels on the left axis', (tester) async {
+      await _pumpTimeline(tester);
+
+      expect(find.text('08:00'), findsOneWidget);
+      expect(find.text('09:00'), findsOneWidget);
+      expect(find.text('10:00'), findsOneWidget);
+      expect(find.text('11:00'), findsOneWidget);
+      expect(find.text('12:00'), findsOneWidget);
+    });
+
+    testWidgets('renders current time indicator when in range', (tester) async {
+      await _pumpTimeline(tester);
+
+      final stackTopLeft = tester.getTopLeft(_timelineStackFinder);
+      final indicatorTopLeft = tester.getTopLeft(
+        find.byKey(_currentTimeIndicatorKey),
+      );
+      final indicatorSize = tester.getSize(
+        find.byKey(_currentTimeIndicatorKey),
+      );
+
+      expect(indicatorTopLeft.dx - stackTopLeft.dx, 40);
+      expect(indicatorTopLeft.dy - stackTopLeft.dy, 75);
+      expect(indicatorSize.width, 160);
+      expect(indicatorSize.height, 2);
     });
   });
 }
@@ -191,6 +226,10 @@ const _backgroundColor = Color(0xFFFFFFFF);
 
 final _timelineGridPaintFinder = find.byWidgetPredicate((widget) {
   return widget is CustomPaint && widget.painter is TimelineGridPainter;
+});
+
+final _timelineStackFinder = find.byWidgetPredicate((widget) {
+  return widget is Stack && widget.alignment == Alignment.topLeft;
 });
 
 Future<void> _pumpGrid(WidgetTester tester, {required double width}) async {
@@ -216,6 +255,7 @@ Future<void> _pumpGrid(WidgetTester tester, {required double width}) async {
 
 final _plannedEventKey = ValueKey('planned-${_plannedEvent.id}');
 final _actualEventKey = ValueKey('actual-${_actualEvent.id}');
+const _currentTimeIndicatorKey = ValueKey('current-time-indicator');
 
 final _plannedEvent = TimelineEvent(
   id: 'planned-focus',
@@ -247,6 +287,10 @@ Future<void> _pumpTimeline(WidgetTester tester) async {
             hourHeight: 60,
             startHour: 8,
             endHour: 12,
+            timeAxisWidth: 40,
+            eventSpacing: 6,
+            currentTime: DateTime(2026, 6, 2, 9, 15),
+            currentTimeIndicatorKey: _currentTimeIndicatorKey,
           ),
         ),
       ),
